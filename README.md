@@ -1,4 +1,4 @@
-<p align="left">
+<p align="center">
   <img
     src="assets/representational-sealing.png"
     alt="Representational sealing: heterogeneous role-exceeding structure is mediated through an interface into a restricted observable representation."
