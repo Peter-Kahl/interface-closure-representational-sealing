@@ -5,7 +5,7 @@ three_detector.py
 =================
 
 Version:
-    1.0.0 (2026-09-28)
+    1.0.1 (2026-09-28)
 
 Supplementary research code for:
 
@@ -21,6 +21,9 @@ Author:
 
 Repository:
     GitHub: https://github.com/Peter-Kahl/interface-closure-representational-sealing
+
+Archive:
+    Zenodo: https://doi.org/10.5281/zenodo.XXXXXXXX
 
 Copyright:
     Copyright (c) 2026 Peter Kahl
@@ -139,10 +142,24 @@ In particular:
       generate the data;
 
     * statistical label symmetry must not be conflated with permutation of
-      role-exceeding realisers; and
+      role-exceeding realisers;
 
     * intervention through G does not test whether some different intervention
-      or measurement could breach the stipulated interface.
+      or measurement could breach the stipulated interface; and
+
+    * Case 1 uses a near-optimal log-likelihood tolerance of 1e-2, whereas the
+      three-detector cases use 1e-3. The looser tolerance is deliberate: the
+      two-detector model is non-identifiable and has a flat or nearly flat
+      likelihood region, so numerically distinct EM solutions can differ
+      slightly in finite-iteration log-likelihood while illustrating the same
+      underlying non-identifiability. The three-detector cases use the tighter
+      tolerance to identify solutions converging on the discrete near-best
+      label orientations.
+
+For reporting purposes, fitted solutions are classified as distinct after
+rounding the prior and detector parameters to two decimal places. This is a
+display and deduplication convention only; it is not a mathematical criterion
+of distinctness and does not alter the fitted parameter values or likelihoods.
 
 The relevant mathematical identifiability results are discussed and cited in
 the accompanying paper, including Kruskal (1977) and Allman, Matias and Rhodes
@@ -150,10 +167,18 @@ the accompanying paper, including Kruskal (1977) and Allman, Matias and Rhodes
 
 Reproducibility
 ---------------
-The simulation uses a fixed pseudo-random seed. Results should therefore be
+The simulation uses a fixed pseudo-random seed and reports the Python and
+NumPy versions used at runtime, together with the numerical likelihood
+tolerances used to classify fitted solutions. Results should therefore be
 reproducible with a compatible NumPy environment, subject to ordinary
-differences in numerical libraries, floating-point arithmetic, platform, and
-software versions.
+differences in numerical libraries, floating-point arithmetic, platform,
+software versions, and pseudo-random number generation behaviour.
+
+Because all cases share one pseudo-random generator, changing the order or
+number of random draws in an earlier case can change the generated data or EM
+initialisations in later cases even when RANDOM_SEED is unchanged. Exact
+reproduction therefore requires the same script version as well as the same
+seed and compatible software environment.
 
 No external data files are required.
 
@@ -169,18 +194,35 @@ representational sealing in any real-world system.
 
 from __future__ import annotations
 
+import sys
+
 import numpy as np
 
 
 # ---------------------------------------------------------------------------
-# Reproducibility and simulation constants
+# Script version, reproducibility, and simulation constants
 # ---------------------------------------------------------------------------
+
+SCRIPT_VERSION = "1.0.1"
 
 RANDOM_SEED = 1
 N_TRIALS = 20_000
 N_STARTS = 40
 EM_ITERATIONS_3 = 500
 EM_ITERATIONS_2 = 800
+
+# Case 1 deliberately uses a looser tolerance because the two-detector model
+# is non-identifiable and its likelihood can be flat or nearly flat across
+# numerically distinct parameterisations. The three-detector cases use the
+# tighter tolerance to isolate the discrete near-best label orientations.
+LIKELIHOOD_TOLERANCE_2 = 1e-2
+LIKELIHOOD_TOLERANCE_3 = 1e-3
+
+# Fitted solutions are classified as distinct for reporting purposes after
+# rounding the prior and detector parameters to this many decimal places.
+# This is a display/deduplication convention, not a mathematical criterion
+# of distinctness.
+SOLUTION_KEY_DECIMALS = 2
 
 rng = np.random.default_rng(RANDOM_SEED)
 
@@ -191,6 +233,37 @@ TRUE_Q = np.array([0.20, 0.10, 0.30], dtype=float)  # P(Xj=1 | G=b)
 
 # Intervention parameters: P(G=a | U=0), P(G=a | U=1).
 TRUE_R = np.array([0.20, 0.80], dtype=float)
+
+
+def validate_intervention(
+    u: np.ndarray,
+    n: int,
+) -> np.ndarray:
+    """
+    Validate and return a binary intervention vector.
+
+    The intervention must contain exactly one value per trial, all values must
+    be 0 or 1, and both intervention conditions must be represented. Requiring
+    both conditions prevents undefined group means in the intervention EM
+    update.
+    """
+    u = np.asarray(u)
+
+    if u.ndim != 1:
+        raise ValueError("u must be a one-dimensional intervention vector.")
+
+    if len(u) != n:
+        raise ValueError("u must contain one intervention value per trial.")
+
+    if not np.all(np.isin(u, [0, 1])):
+        raise ValueError("u must contain only 0 and 1.")
+
+    if not (np.any(u == 0) and np.any(u == 1)):
+        raise ValueError(
+            "u must contain observations in both intervention groups."
+        )
+
+    return u.astype(int, copy=False)
 
 
 def simulate(
@@ -216,16 +289,22 @@ def simulate(
     else:
         if r is None:
             raise ValueError("r is required when an intervention u is supplied.")
-        u = np.asarray(u, dtype=int)
+
+        u = validate_intervention(u, n)
         r = np.asarray(r, dtype=float)
-        if len(u) != n:
-            raise ValueError("u must contain one intervention value per trial.")
+
+        if r.shape != (2,):
+            raise ValueError(
+                "r must contain exactly two intervention probabilities."
+            )
+
         prob_a = np.where(u == 1, r[1], r[0])
 
     # True denotes the role-level state G=a.
     g_is_a = rng.random(n) < prob_a
 
     x = np.empty((n, len(p)), dtype=int)
+
     for j in range(len(p)):
         draw_if_a = rng.random(n) < p[j]
         draw_if_b = rng.random(n) < q[j]
@@ -264,13 +343,14 @@ def fit_three_detector_em(
 ) -> tuple[float, float | np.ndarray, np.ndarray, np.ndarray]:
     """Fit the latent binary model by EM for three-detector records."""
     m = x.shape[1]
+
     p = rng.uniform(0.05, 0.95, m)
     q = rng.uniform(0.05, 0.95, m)
 
     if u is None:
         pi = float(rng.uniform(0.05, 0.95))
     else:
-        u = np.asarray(u, dtype=int)
+        u = validate_intervention(u, len(x))
         r = rng.uniform(0.05, 0.95, 2)
 
     if fixed_p0 is not None:
@@ -284,10 +364,14 @@ def fit_three_detector_em(
             pi = float(weight_a.mean())
         else:
             r = np.array(
-                [weight_a[u == 0].mean(), weight_a[u == 1].mean()]
+                [
+                    weight_a[u == 0].mean(),
+                    weight_a[u == 1].mean(),
+                ]
             )
 
         p = (weight_a[:, None] * x).sum(axis=0) / weight_a.sum()
+
         q = (
             ((1.0 - weight_a)[:, None] * x).sum(axis=0)
             / (1.0 - weight_a).sum()
@@ -320,13 +404,19 @@ def fit_two_detector_em(
         _, weight_a = loglik_and_posterior(x, pi, p, q)
 
         pi = float(weight_a.mean())
-        p = (weight_a[:, None] * x).sum(axis=0) / weight_a.sum()
+
+        p = (
+            (weight_a[:, None] * x).sum(axis=0)
+            / weight_a.sum()
+        )
+
         q = (
             ((1.0 - weight_a)[:, None] * x).sum(axis=0)
             / (1.0 - weight_a).sum()
         )
 
     log_likelihood, _ = loglik_and_posterior(x, pi, p, q)
+
     return log_likelihood, pi, p, q
 
 
@@ -335,16 +425,35 @@ def parameter_key(
     p: np.ndarray,
     q: np.ndarray,
     *,
-    decimals: int = 2,
+    decimals: int = SOLUTION_KEY_DECIMALS,
 ) -> tuple[float, ...]:
-    """Produce a rounded hashable key for displaying distinct fitted solutions."""
-    values = np.concatenate([np.atleast_1d(prior), p, q])
+    """
+    Produce a rounded key used to classify numerically distinct displayed fits.
+
+    The rounding convention is used only for reporting and deduplication. It
+    does not alter fitted parameters, likelihoods, or the underlying model.
+    """
+    values = np.concatenate(
+        [
+            np.atleast_1d(prior),
+            p,
+            q,
+        ]
+    )
+
     return tuple(float(v) for v in np.round(values, decimals))
 
 
-def format_vector(values: np.ndarray, decimals: int = 3) -> str:
+def format_vector(
+    values: np.ndarray,
+    decimals: int = 3,
+) -> str:
     """Format a parameter vector without NumPy scalar representations."""
-    return "[" + ", ".join(f"{float(v):.{decimals}f}" for v in values) + "]"
+    return (
+        "["
+        + ", ".join(f"{float(v):.{decimals}f}" for v in values)
+        + "]"
+    )
 
 
 def format_two_detector_solution(
@@ -364,12 +473,25 @@ def format_two_detector_solution(
 
 def report_three_detector_fits(
     name: str,
-    fits: list[tuple[float, float | np.ndarray, np.ndarray, np.ndarray]],
+    fits: list[
+        tuple[
+            float,
+            float | np.ndarray,
+            np.ndarray,
+            np.ndarray,
+        ]
+    ],
     *,
-    likelihood_tolerance: float = 1e-3,
+    likelihood_tolerance: float = LIKELIHOOD_TOLERANCE_3,
 ) -> None:
-    """Print distinct best-fitting three-detector solutions."""
+    """
+    Print rounded-distinct near-best three-detector solutions.
+
+    Fits within the specified log-likelihood tolerance are classified as
+    distinct for reporting after parameter rounding by parameter_key().
+    """
     fits = sorted(fits, key=lambda fit: -fit[0])
+
     best = fits[0][0]
     seen: set[tuple[float, ...]] = set()
     displayed = 0
@@ -381,6 +503,7 @@ def report_three_detector_fits(
             continue
 
         key = parameter_key(prior, p, q)
+
         if key in seen:
             continue
 
@@ -392,6 +515,7 @@ def report_three_detector_fits(
             if np.ndim(prior) == 0
             else format_vector(np.asarray(prior), 3)
         )
+
         print(
             f"loglik={log_likelihood:.4f}  "
             f"prior={prior_text}  "
@@ -400,23 +524,39 @@ def report_three_detector_fits(
         )
 
     print(
-        "distinct best-fitting solutions found among "
-        f"{len(fits)} starts: {displayed}"
+        "distinct near-best solutions "
+        f"(Δloglik <= {likelihood_tolerance:g}; "
+        f"parameters rounded to {SOLUTION_KEY_DECIMALS} d.p.) "
+        f"found among {len(fits)} starts: {displayed}"
     )
 
 
-def report_generating_parameters() -> None:
-    """Print the fixed seed and population parameters used by the simulation."""
-    print("=== Generating parameters ===")
+def report_run_configuration() -> None:
+    """Print the software environment and fixed simulation configuration."""
+    print("=== Run configuration ===")
+    print(f"script version = {SCRIPT_VERSION}")
+    print(f"Python version = {sys.version.split()[0]}")
+    print(f"NumPy version = {np.__version__}")
     print(f"random seed = {RANDOM_SEED}")
     print(f"N = {N_TRIALS}")
     print(f"P(G=a) = {TRUE_PI}")
     print(f"P(Xj=1 | G=a) = {format_vector(TRUE_P, 2)}")
     print(f"P(Xj=1 | G=b) = {format_vector(TRUE_Q, 2)}")
     print(f"EM random starts per case = {N_STARTS}")
+    print(
+        "log-likelihood tolerances: "
+        f"two-detector={LIKELIHOOD_TOLERANCE_2:g}, "
+        f"three-detector={LIKELIHOOD_TOLERANCE_3:g}"
+    )
+    print(
+        "solution-key rounding for reporting = "
+        f"{SOLUTION_KEY_DECIMALS} decimal places"
+    )
 
 
-def run_case_1_two_detectors(x_three: np.ndarray) -> None:
+def run_case_1_two_detectors(
+    x_three: np.ndarray,
+) -> None:
     """
     Case 1: fit only X1 and X2.
 
@@ -424,30 +564,58 @@ def run_case_1_two_detectors(x_three: np.ndarray) -> None:
     collection of solutions encountered here illustrates that fact; it does
     not numerically prove the existence or geometry of the population-level
     non-identifiable solution set.
+
+    A looser likelihood tolerance is used here than in the three-detector
+    cases because the non-identifiable model can have a flat or nearly flat
+    likelihood region. Numerically distinct EM fits may therefore differ
+    slightly in finite-iteration likelihood while illustrating the same
+    underlying non-identifiability.
+
+    Distinctness in the reported count is operationalised by rounding the
+    fitted prior and detector parameters to SOLUTION_KEY_DECIMALS decimal
+    places. This is a reporting convention, not a claim that the resulting
+    classes are mathematically distinct solutions.
     """
     fits = [
         fit_two_detector_em(x_three[:, :2])
         for _ in range(N_STARTS)
     ]
+
     fits.sort(key=lambda fit: -fit[0])
     best = fits[0][0]
 
-    # Retain one representative fit for each rounded display key.
+    # Retain one representative fit for each rounded reporting key.
     representatives: dict[
         tuple[float, ...],
-        tuple[float, float, np.ndarray, np.ndarray],
+        tuple[
+            float,
+            float,
+            np.ndarray,
+            np.ndarray,
+        ],
     ] = {}
+
     for fit in fits:
-        if best - fit[0] >= 1e-2:
+        if best - fit[0] > LIKELIHOOD_TOLERANCE_2:
             continue
-        key = parameter_key(fit[1], fit[2], fit[3])
+
+        key = parameter_key(
+            fit[1],
+            fit[2],
+            fit[3],
+        )
+
         representatives.setdefault(key, fit)
 
     print("\n=== Case 1. two detectors ===")
+
     print(
-        "distinct near-optimal solutions found among "
-        f"{N_STARTS} starts: {len(representatives)}"
+        "distinct near-optimal solutions "
+        f"(Δloglik <= {LIKELIHOOD_TOLERANCE_2:g}; "
+        f"parameters rounded to {SOLUTION_KEY_DECIMALS} d.p.) "
+        f"found among {N_STARTS} starts: {len(representatives)}"
     )
+
     print(
         "(The underlying two-indicator model is non-identifiable; "
         "the finite set reported here is only a numerical illustration.)"
@@ -455,10 +623,20 @@ def run_case_1_two_detectors(x_three: np.ndarray) -> None:
 
     for fit in list(representatives.values())[:4]:
         _, prior, p, q = fit
-        print("  " + format_two_detector_solution(prior, p, q))
+
+        print(
+            "  "
+            + format_two_detector_solution(
+                prior,
+                p,
+                q,
+            )
+        )
 
 
-def run_case_2_three_detectors(x_three: np.ndarray) -> None:
+def run_case_2_three_detectors(
+    x_three: np.ndarray,
+) -> None:
     """
     Case 2: fit all three passive detectors.
 
@@ -471,20 +649,29 @@ def run_case_2_three_detectors(x_three: np.ndarray) -> None:
         fit_three_detector_em(x_three)
         for _ in range(N_STARTS)
     ]
-    report_three_detector_fits("Case 2. three detectors", fits)
+
+    report_three_detector_fits(
+        "Case 2. three detectors",
+        fits,
+    )
 
 
 def run_case_3_intervention() -> None:
     """
     Case 3: add a randomised intervention U whose effect is mediated by G.
 
-    U changes P(G=a) across regimes, enriching the role-level observational
-    structure. Because U reaches the detectors only through G, it introduces
-    no direct Q-sensitive path. It therefore does not, by itself, identify a
-    role-exceeding realiser or break a permutation of such realisers behind
-    the stipulated interface.
+    U changes P(G=a) across intervention conditions, enriching the role-level
+    observational structure. Because U reaches the detectors only through G,
+    it introduces no direct Q-sensitive path. It therefore does not, by
+    itself, identify a role-exceeding realiser or break a permutation of such
+    realisers behind the stipulated interface.
     """
-    u = rng.integers(0, 2, N_TRIALS)
+    u = rng.integers(
+        0,
+        2,
+        N_TRIALS,
+    )
+
     x = simulate(
         N_TRIALS,
         None,
@@ -495,9 +682,13 @@ def run_case_3_intervention() -> None:
     )
 
     fits = [
-        fit_three_detector_em(x, u=u)
+        fit_three_detector_em(
+            x,
+            u=u,
+        )
         for _ in range(N_STARTS)
     ]
+
     report_three_detector_fits(
         "Case 3. three detectors + role-mediated intervention",
         fits,
@@ -505,12 +696,15 @@ def run_case_3_intervention() -> None:
 
     print(
         "The intervention changes the role-level prior but remains mediated "
-        "through G; it supplies no direct Q-sensitive observation and therefore "
-        "does not break realiser permutation behind the stipulated interface."
+        "through G; it supplies no direct Q-sensitive observation and "
+        "therefore does not break realiser permutation behind the stipulated "
+        "interface."
     )
 
 
-def run_case_4_stipulation(x_three: np.ndarray) -> None:
+def run_case_4_stipulation(
+    x_three: np.ndarray,
+) -> None:
     """
     Case 4: stipulate P(X1=1 | G=a)=0.9.
 
@@ -520,9 +714,13 @@ def run_case_4_stipulation(x_three: np.ndarray) -> None:
     role-exceeding realiser is measured, and the causal interface is unchanged.
     """
     fits = [
-        fit_three_detector_em(x_three, fixed_p0=0.90)
+        fit_three_detector_em(
+            x_three,
+            fixed_p0=0.90,
+        )
         for _ in range(N_STARTS)
     ]
+
     report_three_detector_fits(
         "Case 4. conventional stipulation P(X1=1 | G=a)=0.9",
         fits,
@@ -534,7 +732,9 @@ def run_case_4_stipulation(x_three: np.ndarray) -> None:
     )
 
 
-def report_label_swap_invariance(x_three: np.ndarray) -> None:
+def report_label_swap_invariance(
+    x_three: np.ndarray,
+) -> None:
     """
     Verify likelihood invariance under permutation of latent-state labels.
 
@@ -544,19 +744,31 @@ def report_label_swap_invariance(x_three: np.ndarray) -> None:
     permutation: role-exceeding realisers are absent from this likelihood.
     """
     loglik_original, _ = loglik_and_posterior(
-        x_three, TRUE_PI, TRUE_P, TRUE_Q
+        x_three,
+        TRUE_PI,
+        TRUE_P,
+        TRUE_Q,
     )
+
     loglik_swapped, _ = loglik_and_posterior(
-        x_three, 1.0 - TRUE_PI, TRUE_Q, TRUE_P
+        x_three,
+        1.0 - TRUE_PI,
+        TRUE_Q,
+        TRUE_P,
     )
-    difference = abs(loglik_original - loglik_swapped)
+
+    difference = abs(
+        loglik_original - loglik_swapped
+    )
 
     print("\n=== Label-swap invariance check ===")
+
     print(
         f"original loglik = {loglik_original:.6f}\n"
         f"swapped  loglik = {loglik_swapped:.6f}\n"
         f"difference       = {difference:.12g}"
     )
+
     print(
         "Any non-zero difference at this scale is floating-point error. "
         "This check concerns statistical label symmetry only; realiser "
@@ -565,8 +777,20 @@ def report_label_swap_invariance(x_three: np.ndarray) -> None:
 
 
 def main() -> None:
-    """Run the complete §10.3 supplementary simulation in textual order."""
-    report_generating_parameters()
+    """
+    Run the complete §10.3 supplementary simulation in textual order.
+
+    The passive three-detector dataset is generated once and reused for
+    Cases 1, 2 and 4. Case 3 requires a separate dataset because it introduces
+    the intervention U.
+
+    All random draws use the same seeded NumPy generator. Consequently, the
+    exact Case 3 data and later EM initialisations depend on the sequence of
+    random draws made by earlier cases. Exact numerical reproduction therefore
+    requires the same script version as well as a compatible software
+    environment.
+    """
+    report_run_configuration()
 
     passive_x = simulate(
         N_TRIALS,
