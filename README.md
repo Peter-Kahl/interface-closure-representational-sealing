@@ -1,12 +1,12 @@
-<p align="center">
+# Interface Closure and Representational Sealing
+
+<p align="left">
   <img
     src="assets/representational-sealing.png"
     alt="Representational sealing: heterogeneous role-exceeding structure is mediated through an interface into a restricted observable representation."
     width="360"
   >
 </p>
-
-# Interface Closure and Representational Sealing
 
 Computational supplement to:
 
