@@ -1,0 +1,39 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using the metadata below."
+title: "Interface Closure and Representational Sealing: Three-Detector Simulation"
+type: software
+authors:
+  - family-names: "Kahl"
+    given-names: "Peter"
+    orcid: "https://orcid.org/0009-0003-1616-4843"
+
+version: "1.0.1"
+date-released: "2026-09-28"
+
+abstract: >-
+  Computational supplement to 'What Conceptual Change Cannot Recover:
+  Interface Closure and Representational Sealing'. The software implements
+  a three-detector latent-class toy model illustrating the distinction
+  between role-level identification, statistical label symmetry, and
+  epistemic access to stipulated role-exceeding structure under interface
+  closure.
+
+keywords:
+  - "representational sealing"
+  - "interface closure"
+  - "identifiability"
+  - "latent-class models"
+  - "conceptual change"
+  - "epistemology"
+  - "philosophy of science"
+
+license: MIT
+
+references:
+  - type: article
+    title: "What Conceptual Change Cannot Recover: Interface Closure and Representational Sealing"
+    authors:
+      - family-names: "Kahl"
+        given-names: "Peter"
+        orcid: "https://orcid.org/0009-0003-1616-4843"
+    year: 2026
