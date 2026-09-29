@@ -1,1 +1,42 @@
+=== Run configuration ===
+script version = 1.0.1
+Python version = 3.14.7
+NumPy version = 2.5.3
+random seed = 1
+N = 20000
+P(G=a) = 0.3
+P(Xj=1 | G=a) = [0.90, 0.80, 0.85]
+P(Xj=1 | G=b) = [0.20, 0.10, 0.30]
+EM random starts per case = 40
+log-likelihood tolerances: two-detector=0.01, three-detector=0.001
+solution-key rounding for reporting = 2 decimal places
 
+=== Case 1. two detectors ===
+distinct near-optimal solutions (Δloglik <= 0.01; parameters rounded to 2 d.p.) found among 40 starts: 36
+(The underlying two-indicator model is non-identifiable; the finite set reported here is only a numerical illustration.)
+  prior=0.301  p=[0.950, 0.756]  q=[0.181, 0.120]
+  prior=0.579  p=[0.147, 0.030]  q=[0.777, 0.698]
+  prior=0.556  p=[0.133, 0.017]  q=[0.761, 0.680]
+  prior=0.766  p=[0.249, 0.118]  q=[0.944, 0.941]
+
+=== Case 2. three detectors ===
+loglik=-35916.2295  prior=0.694  p=[0.201, 0.097, 0.295]  q=[0.892, 0.798, 0.850]
+loglik=-35916.2295  prior=0.306  p=[0.892, 0.798, 0.850]  q=[0.201, 0.097, 0.295]
+distinct near-best solutions (Δloglik <= 0.001; parameters rounded to 2 d.p.) found among 40 starts: 2
+
+=== Case 3. three detectors + role-mediated intervention ===
+loglik=-33702.7633  prior=[0.192, 0.795]  p=[0.900, 0.801, 0.849]  q=[0.204, 0.105, 0.303]
+loglik=-33702.7633  prior=[0.808, 0.205]  p=[0.204, 0.105, 0.303]  q=[0.900, 0.801, 0.849]
+distinct near-best solutions (Δloglik <= 0.001; parameters rounded to 2 d.p.) found among 40 starts: 2
+The intervention changes the role-level prior but remains mediated through G; it supplies no direct Q-sensitive observation and therefore does not break realiser permutation behind the stipulated interface.
+
+=== Case 4. conventional stipulation P(X1=1 | G=a)=0.9 ===
+loglik=-35916.8190  prior=0.302  p=[0.900, 0.800, 0.852]  q=[0.202, 0.099, 0.297]
+distinct near-best solutions (Δloglik <= 0.001; parameters rounded to 2 d.p.) found among 40 starts: 1
+The stipulation fixes a statistical orientation only; it is not a target-side anchor and does not add a new measurement path.
+
+=== Label-swap invariance check ===
+original loglik = -35917.390038
+swapped  loglik = -35917.390038
+difference       = 1.45519152284e-11
+Any non-zero difference at this scale is floating-point error. This check concerns statistical label symmetry only; realiser permutation is a distinct interface-level claim.
