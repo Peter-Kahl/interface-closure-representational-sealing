@@ -10,7 +10,7 @@
 
 Computational supplement to:
 
-**Peter Kahl, ‘What Conceptual Change Cannot Recover: Interface Closure and Representational Sealing’ (2026).**
+**Peter Kahl, ‘What Conceptual Change Cannot Recover: Interface Closure, Epistemic Recoupling and Representational Sealing’ (2026).**
 
 This repository contains simulations accompanying the paper's analysis of **interface closure** and **representational sealing**. The code illustrates the distinction between identifying a latent role-level structure and gaining epistemic access to structure that lies beyond the stipulated interface.
 
@@ -359,7 +359,7 @@ The archived software release should therefore be used when reproducing or citin
 
 ## Associated paper
 
-Peter Kahl, **‘What Conceptual Change Cannot Recover: Interface Closure and Representational Sealing’** (2026).
+Peter Kahl, **‘What Conceptual Change Cannot Recover: Interface Closure, Epistemic Recoupling and Representational Sealing’** (2026).
 
 Publication and DOI details will be added when available.
 

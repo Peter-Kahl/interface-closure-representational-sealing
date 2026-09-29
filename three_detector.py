@@ -10,7 +10,8 @@ Version:
 Supplementary research code for:
 
     Peter Kahl, "What Conceptual Change Cannot Recover:
-    Interface Closure and Representational Sealing" (2026),
+    Interface Closure, Epistemic Recoupling and Representational
+    Sealing" (2026),
     §10, "A toy model of sealing: three detectors".
 
 Author:
@@ -21,9 +22,6 @@ Author:
 
 Repository:
     GitHub: https://github.com/Peter-Kahl/interface-closure-representational-sealing
-
-Archive:
-    Zenodo: https://doi.org/10.5281/zenodo.XXXXXXXX
 
 Copyright:
     Copyright (c) 2026 Peter Kahl
