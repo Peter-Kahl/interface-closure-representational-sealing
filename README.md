@@ -10,193 +10,123 @@
 
 Computational supplement to:
 
-**Peter Kahl, ‘What Conceptual Change Cannot Recover: Interface Closure, Epistemic Recoupling and Representational Sealing’ (2026).**
+**Peter Kahl, ‘What Conceptual Change Cannot Recover: Interface Closure, Epistemic Recoupling and Representational Sealing’ (2026). Lex et Ratio Working Paper LXR-2026-PHI-RESTCERT-WP, Version 1.0. doi: 10.5281/zenodo.&lt;TBA&gt;.**
 
-This repository contains simulations accompanying the paper's analysis of **interface closure** and **representational sealing**. The code illustrates the distinction between identifying a latent role-level structure and gaining epistemic access to structure that lies beyond the stipulated interface.
+This repository contains the simulation accompanying the paper's toy model of **interface closure** and **representational sealing** (§10). The code illustrates the difference between identifying a latent role-level structure and gaining access to structure that the stipulated interface does not transmit.
 
-The repository also contains the complete console output of the canonical reference run reported in §10.3 of the paper, allowing the numerical claims in the paper to be inspected without first rerunning the simulation.
+It also contains the complete console output of the reference run reported in §10.3 of the paper, so that the numerical claims can be inspected without rerunning the simulation.
 
-## Three-detector simulation
+## Notation
 
-`three_detector.py` implements the toy model developed in §10 of the paper.
+The code calls the latent role-level state `G`, following earlier drafts. In the published paper, `G` denotes the condition inquired into, and the latent state is written `S`. **Throughout this repository, the code's `G` is the paper's `S`.**
 
-A binary latent role-level state `G ∈ {a, b}` generates conditionally independent observations through noisy binary detectors:
+## The model
+
+A binary latent state `G ∈ {a, b}` (the paper's `S`) generates conditionally independent readings through three noisy binary detectors:
 
 ```text
-G → (X1, X2, X3)
+G → (X1, X2, X3)          [paper: S → (X1, X2, X3)]
 ```
 
-The simulation examines four cases.
+The target's two states are realised by two kinds, which differ in a property `Q`. Which kind fills which state is **not** a variable in the model. In the paper it is a structural parameter: an assignment `α` of kinds to states. The sealing condition is
+
+```text
+P(X1, X2, X3 | S; α) = P(X1, X2, X3 | S)   for every assignment α
+```
+
+Given the state, the readings do not depend on which kind realises it. The code implements this condition by construction: neither `α` nor `Q` appears anywhere in the simulation or the likelihood, so there is no `Q`-sensitive measurement path.
+
+This matters for interpretation. The simulation does **not** establish that a real system is interface-closed, that role-exceeding structure exists, or that such structure is physically unobservable. Those are substantive premises that must be independently defended when the theory is applied. The simulation shows what follows **conditional on the stipulated interface**.
+
+## The four cases
 
 ### 1. Two detectors
 
-With only `X1` and `X2`, the latent-class model is ordinarily non-identifiable. Multiple materially different parameterisations can fit the same observational distribution.
+With only `X1` and `X2`, the latent-class model is not identifiable: the observed two-detector distribution has three independent degrees of freedom, while the model has five free parameters. Many materially different parameterisations fit the same observations, and repeated EM (expectation-maximisation) runs from random starting points make this visible.
 
-Multiple random EM initialisations are used to make this numerical multiplicity visible.
-
-The numerical result is illustrative. The finite collection of solutions encountered by the program does not itself prove the mathematical structure of the non-identifiable solution set.
+The result is illustrative. The finite set of solutions the program finds does not itself establish the mathematical structure of the non-identifiable solution set.
 
 ### 2. Three detectors
 
-Adding a suitable third conditionally independent detector generically identifies the role-level latent structure, subject to permutation of the two latent-state labels.
+Adding a third suitable conditionally independent detector generically identifies the role-level structure up to relabelling of the two latent states (Kruskal 1977; Allman, Matias and Rhodes 2009). The simulation recovers one role-level structure in its two label orientations.
 
-The simulation therefore distinguishes:
+This case removes ordinary statistical non-identifiability, so that what remains undetermined is visibly the assignment of realiser kinds to states.
 
-```text
-role-level underidentification
+### 3. Intervention without recoupling
 
-        from
-
-ordinary latent-label symmetry
-```
-
-For the parameters used here, repeated EM initialisations recover the same role-level structure in its two label orientations.
-
-### 3. Role-mediated intervention
-
-The simulation then introduces a randomised intervention `U`:
+A randomised intervention `U` changes the probability of the latent state:
 
 ```text
 U → G → (X1, X2, X3)
 ```
 
-The intervention changes the probability of the latent role-level state and substantially enriches the available regime information.
+The intervention enriches the available observations, but acts only through the same state. It introduces no path sensitive to `Q`, and the two label orientations remain.
 
-It nevertheless introduces no direct measurement path to the stipulated role-exceeding property `Q`.
+> **Intervening defeats a seal only if it acts through a dependence sensitive to the sealed distinction.**
 
-The example therefore illustrates an important point developed in the paper:
+An intervention confined to the same interface may improve identification of the state without giving access to distinctions beyond it. A different intervention or measurement that produced a `Q`-sensitive response would change the situation: in the paper's terms it would be a *refining recoupling*, which lies outside the model.
 
-> **Intervention does not, merely by being intervention, escape an interface.**
+### 4. A stipulated response probability
 
-An intervention mediated entirely through the same role-level state may improve identification of that state without providing access to distinctions beyond it.
-
-### 4. Conventional statistical anchor
-
-Finally, the model stipulates:
+Finally, the model is fitted with the stipulation
 
 ```text
 P(X1=1 | G=a) = 0.9
 ```
 
-This removes the ordinary statistical label ambiguity by fixing an orientation of the latent model.
-
-It does not introduce a new measurement path or independently identify a role-exceeding realiser.
-
-The example therefore distinguishes:
+This removes the statistical label ambiguity by fixing which latent state is *called* `a`. It answers a naming question:
 
 ```text
-role identification
-        ≠
-statistical orientation
-        ≠
-realiser identification
+Which latent component is designated a?
 ```
 
-## Interface interpretation
-
-The conceptual architecture represented by the simulation is:
+It does not answer a different one:
 
 ```text
-role-exceeding realiser / property Q
-                |
-                v
-         role-level state G
-          /      |      \
-         v       v       v
-        X1      X2      X3
+Which independently specified realiser kind occupies that position?
 ```
 
-In the intervention case:
+It adds no measurement path and no information about `Q`.
+
+## Label symmetry and realiser permutation
+
+Two permutation claims must not be conflated.
+
+**Statistical label symmetry.** The labels `a` and `b` are arbitrary. Exchanging `(pi, p, q)` with `(1-pi, q, p)` leaves the likelihood unchanged, and `three_detector.py` checks this numerically. This symmetry is an invariance of the model's likelihood.
+
+**Realiser permutation.** Exchanging which kind realises which state is a different claim. It concerns a distinction the likelihood does not parameterise at all. Its invariance follows, within the toy model, from the stipulated interface, not from anything the likelihood shows.
 
 ```text
-U → G → (X1, X2, X3)
+statistical label symmetry  ≠  realiser permutation
 ```
 
-There is deliberately no direct `Q → Xi` measurement path.
+## What the simulation does not show
 
-This matters for interpretation. The simulation does **not** establish that a real system is interface-closed, that role-exceeding structure exists, or that such structure is physically unobservable. Those are substantive premises that must be independently defended when applying the theory.
+The code is an illustration, not a proof of the paper's mathematical or philosophical claims. In particular:
 
-The simulation instead asks what follows **conditional on the stipulated interface architecture**.
-
-## Statistical label symmetry and realiser permutation
-
-Two different permutation claims must not be conflated.
-
-### Statistical label symmetry
-
-The labels `a` and `b` assigned to the two latent classes are arbitrary. Exchanging
-
-```text
-(pi, p, q)
-```
-
-with
-
-```text
-(1-pi, q, p)
-```
-
-leaves the observational likelihood unchanged.
-
-`three_detector.py` verifies this equality numerically.
-
-This is ordinary statistical label redundancy.
-
-### Realiser permutation
-
-Realiser permutation is a different claim. It concerns exchanging role-exceeding realisers while holding fixed everything available through the stipulated interface.
-
-The simulation's likelihood does not directly demonstrate such a permutation because `Q` is deliberately absent from the likelihood.
-
-Rather, invariance with respect to role-exceeding structure follows, within the toy model, from the stipulated interface architecture: the simulated observational system contains no `Q`-sensitive path.
-
-The distinction is therefore:
-
-```text
-statistical label symmetry
-        ≠
-role-exceeding realiser permutation
-```
-
-The first is directly visible in the fitted latent-class model. The second is an interface-level claim.
-
-## What the simulation does not prove
-
-The code is an illustration, not a proof of the mathematical or philosophical claims developed in the paper.
-
-In particular:
-
-- numerical convergence from multiple EM initialisations does not prove global identifiability;
-- observing multiple near-optimal two-detector fits does not establish the mathematical structure of the non-identifiable solution set;
-- generic identifiability of the three-indicator latent-class model depends on mathematical results and their assumptions, not on this simulation;
-- expectation-maximisation is a local optimisation procedure and may converge to local optima or numerically distinct approximations;
-- finite-sample estimates need not equal the population parameters used to generate the data;
-- statistical label symmetry is not itself evidence of role-exceeding realiser permutation;
-- an intervention mediated through `G` does not establish that every possible intervention would remain behind the interface; and
+- convergence from multiple EM starts does not prove global identifiability;
+- the multiple near-optimal two-detector fits do not establish the structure of the non-identifiable solution set;
+- generic identifiability of the three-indicator model rests on mathematical results and their assumptions, not on this simulation;
+- EM is a local optimisation method and may converge to local optima or numerically distinct approximations;
+- finite-sample estimates need not equal the generating parameters;
+- statistical label symmetry is not evidence of realiser permutation;
+- an intervention acting through the state does not show that every possible intervention would remain behind the interface; and
 - the simulation does not establish interface closure in any real physical, computational, biological or social system.
-
-The relevant identifiability literature, including Kruskal (1977) and Allman, Matias and Rhodes (2009), is discussed and cited in the accompanying paper.
 
 ## Requirements
 
-The simulation requires:
+- Python 3.8 or later
+- NumPy 1.17 or later (see `requirements.txt`)
 
-- Python 3
-- NumPy
-
-No external data files are required. The observations analysed by the program are generated internally from the parameters and pseudo-random seed specified in the source code.
-
-A minimal installation is:
+No external data files are needed: the observations are generated internally from the parameters and random seed set in the source code.
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate
-pip install numpy
+pip install -r requirements.txt
 ```
 
 ## Running the simulation
-
-Run:
 
 ```bash
 python three_detector.py
@@ -204,51 +134,38 @@ python three_detector.py
 
 The script reports:
 
-1. distinct near-optimal fits obtained with two detectors;
+1. the distinct near-optimal fits obtained with two detectors;
 2. the two label-equivalent solutions recovered with three detectors;
-3. the corresponding solutions under a role-mediated intervention;
-4. the single statistical orientation obtained after conventional anchoring; and
-5. a direct numerical check of likelihood invariance under latent-label exchange.
-
-To save a new run for comparison with the archived reference output:
-
-```bash
-python three_detector.py > my_run.txt
-```
+3. the corresponding solutions under intervention without recoupling;
+4. the single orientation obtained under the stipulation; and
+5. a numerical check of likelihood invariance under exchange of latent-state labels.
 
 ## Reference output
 
-The repository includes the complete, unedited console output from the canonical run used for the numerical illustration reported in §10.3 of the accompanying paper:
+`output/three_detector_output.txt` is the complete, unedited console output of the reference run reported in §10.3 of the paper, produced by `three_detector.py` version **1.0.1** with Python 3.14.7 and NumPy 2.5.3.
 
-```text
-output/three_detector_output.txt
-```
+It is provided for reproducibility and scrutiny. It is not an independent empirical dataset: the observations are simulated by the program itself.
 
-The reference output was generated by `three_detector.py` version **1.0.1** using the fixed pseudo-random seed and generating parameters specified below.
-
-The reference output is provided for **reproducibility and scrutiny**. It is not an independent empirical dataset: the observations are simulated by the program itself. Its purpose is to record the exact numerical run underlying the statements made in §10.3 and to permit comparison with independently reproduced runs.
-
-A reproduced run can be compared directly with the reference output, for example:
+To compare a new run with it:
 
 ```bash
 python three_detector.py > my_run.txt
 diff -u output/three_detector_output.txt my_run.txt
 ```
 
-Exact textual identity is not guaranteed across Python, NumPy, platform or numerical-library versions. Small floating-point differences do not by themselves indicate a failure to reproduce the qualitative results.
+**Independent reproduction.** The reference run has been reproduced with Python 3.12.3 and NumPy 2.4.4. Every figure the paper reports was identical: the count of 36 near-optimal two-detector solutions, both three-detector solutions and their log-likelihoods, the intervention and stipulation cases, and the label-swap check. The only difference was among the four *example* two-detector fits printed under Case 1. These are drawn from a nearly flat likelihood, so which examples are printed first can vary between environments. The paper does not rely on them.
+
+In general, exact textual identity is not guaranteed across Python, NumPy or platform versions, and small floating-point differences do not by themselves indicate a failure to reproduce.
 
 ## Reproducibility
 
-The generating parameters and random seed are defined explicitly in `three_detector.py`.
-
-The canonical simulation uses:
+The generating parameters and random seed are set explicitly in `three_detector.py`:
 
 ```text
 random seed = 1
 N = 20,000
 
 P(G=a) = 0.30
-
 P(Xj=1 | G=a) = [0.90, 0.80, 0.85]
 P(Xj=1 | G=b) = [0.20, 0.10, 0.30]
 ```
@@ -260,86 +177,31 @@ P(G=a | U=0) = 0.20
 P(G=a | U=1) = 0.80
 ```
 
-Each reported model is fitted from 40 random EM initialisations.
+Each case is fitted from 40 random EM starts. Fits within 0.01 (two detectors) or 0.001 (three detectors) of the best log-likelihood are counted, and parameters are rounded to two decimal places to identify distinct solutions. The rounding is a reporting convention, not a mathematical criterion of distinctness.
 
-A fixed pseudo-random seed is used for reproducibility. Small numerical differences may nevertheless occur across Python, NumPy, platform or numerical-library versions.
+All cases share one seeded random-number generator, so changing an earlier case changes the data and starting points of later ones. Exact reproduction therefore requires the same script version as well as the same seed.
 
 ## Expected qualitative results
-
-A canonical run should exhibit the following pattern:
 
 | Case | Expected result |
 |---|---|
 | Two detectors | Many distinct near-optimal parameterisations |
 | Three detectors | One role-level structure in two label orientations |
-| Role-mediated intervention | Enriched role-level identification, but the two label orientations remain |
-| Conventional anchor | One statistical orientation |
+| Intervention without recoupling | Richer information about the state, but the two label orientations remain |
+| Stipulated response probability | One statistical orientation |
 | Label-swap check | Equal likelihoods up to floating-point error |
-
-The precise fitted parameter values are sample-dependent. The important result is the structure of the comparison rather than exact equality with the generating parameters.
-
-For the exact numerical output reported with the paper, see `output/three_detector_output.txt`.
-
-## Interpretation of the intervention
-
-The intervention deserves particular care.
-
-The model contains:
-
-```text
-U → G → X
-```
-
-but not:
-
-```text
-U → Q → X
-```
-
-or:
-
-```text
-Q → X
-```
-
-Consequently, the intervention can reveal additional information about how the role-level state `G` behaves across regimes while remaining insensitive to distinctions that are not represented at the interface.
-
-A different intervention or measurement that generated an independently `Q`-sensitive response would change the epistemic situation. It would amount to breaching or extending the interface assumed by this toy model.
-
-The simulation therefore does not claim that intervention can never overcome sealing. It illustrates why **intervention confined to the same interface need not do so**.
-
-## Interpretation of the conventional anchor
-
-The stipulation
-
-```text
-P(X1=1 | G=a) = 0.9
-```
-
-selects one orientation of the statistical model.
-
-It therefore solves a statistical naming problem:
-
-```text
-Which latent component is designated a?
-```
-
-It does not, by itself, answer a different question:
-
-```text
-Which independently specified role-exceeding realiser occupies that position?
-```
-
-This distinction is central to the use of the example in the accompanying paper.
 
 ## Repository structure
 
 ```text
 interface-closure-representational-sealing/
 ├── README.md
+├── CHANGELOG.md
 ├── LICENSE
 ├── CITATION.cff
+├── .zenodo.json
 ├── .gitignore
+├── requirements.txt
 ├── three_detector.py
 ├── output/
 │   └── three_detector_output.txt
@@ -349,39 +211,23 @@ interface-closure-representational-sealing/
 
 ## Version correspondence
 
-The numerical results discussed in §10.3 of the accompanying paper correspond to:
-
-```text
-three_detector.py version 1.0.1
-```
-
-The archived software release should therefore be used when reproducing or citing the numerical results associated with that version of the paper. Later revisions of the code may produce different numerical output or implement additional analyses.
-
-## Associated paper
-
-Peter Kahl, **‘What Conceptual Change Cannot Recover: Interface Closure, Epistemic Recoupling and Representational Sealing’** (2026).
-
-Publication and DOI details will be added when available.
+The numerical results in §10.3 of the paper correspond to `three_detector.py` **version 1.0.1**. Use the archived release of that version when reproducing or citing those results. Later versions may produce different output. See `CHANGELOG.md` for the history of changes.
 
 ## Citation
 
-If you use the theoretical argument, please cite the accompanying paper.
+If you use the theoretical argument, please cite the paper:
 
-If you use or modify the software, please also cite the archived software release. Citation metadata are provided in `CITATION.cff`.
+> Kahl, P. (2026) *What Conceptual Change Cannot Recover: Interface Closure, Epistemic Recoupling and Representational Sealing*. Lex et Ratio Working Paper LXR-2026-PHI-RESTCERT-WP, Version 1.0. doi: 10.5281/zenodo.&lt;TBA&gt;.
 
-The paper and software are separate scholarly objects and may therefore have separate persistent identifiers.
+If you use or modify the software, please also cite the archived software release. Citation metadata are in `CITATION.cff`. The paper and the software are separate scholarly objects with separate persistent identifiers.
 
 ## Licence
 
-The source code in this repository is released under the **MIT License**. See `LICENSE`.
-
-The accompanying scholarly paper is a separate work and is licensed under **CC BY 4.0**, unless otherwise stated.
+The source code is released under the **MIT License** (see `LICENSE`). The accompanying paper is a separate work, licensed under **CC BY 4.0**.
 
 ## Disclaimer
 
-This software is provided to support reproducibility and scrutiny of the accompanying theoretical argument.
-
-Its numerical output should be interpreted together with the assumptions, definitions, limitations and argument of the paper. The output is not, by itself, empirical evidence for the existence of representational sealing or interface closure in any real-world system.
+This software supports reproducibility and scrutiny of the accompanying theoretical argument. Its output should be read together with the assumptions, definitions, limitations and argument of the paper. It is not, by itself, evidence of representational sealing or interface closure in any real-world system.
 
 The software is provided ‘as is’, without warranty of any kind, as specified in the MIT License.
 
@@ -389,5 +235,5 @@ The software is provided ‘as is’, without warranty of any kind, as specified
 
 **Peter Kahl**
 Independent researcher, Lex et Ratio
-ORCID: 0009-0003-1616-4843
-https://www.lexetratio.com/
+ORCID: [0009-0003-1616-4843](https://orcid.org/0009-0003-1616-4843)
+[www.lexetratio.com](https://www.lexetratio.com)

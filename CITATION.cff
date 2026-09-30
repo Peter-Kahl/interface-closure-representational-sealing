@@ -1,39 +1,48 @@
 cff-version: 1.2.0
-message: "If you use this software, please cite it using the metadata below."
+message: "If you use this software, please cite it using the metadata below. If you use the theoretical argument, please also cite the accompanying paper."
 title: "Interface Closure and Representational Sealing: Three-Detector Simulation"
 type: software
 authors:
   - family-names: "Kahl"
     given-names: "Peter"
+    affiliation: "Independent researcher, Lex et Ratio"
     orcid: "https://orcid.org/0009-0003-1616-4843"
-
 version: "1.0.1"
-date-released: "2026-09-28"
-
+date-released: "2026-09-30"
+# Add the software's Zenodo DOI once reserved or issued:
+# doi: "10.5281/zenodo.<TBA>"
+repository-code: "https://github.com/Peter-Kahl/interface-closure-representational-sealing"
+url: "https://www.lexetratio.com"
+license: MIT
 abstract: >-
   Computational supplement to 'What Conceptual Change Cannot Recover:
-  Interface Closure and Representational Sealing'. The software implements
-  a three-detector latent-class toy model illustrating the distinction
-  between role-level identification, statistical label symmetry, and
-  epistemic access to stipulated role-exceeding structure under interface
-  closure.
-
+  Interface Closure, Epistemic Recoupling and Representational Sealing'
+  (Lex et Ratio Working Paper LXR-2026-PHI-RESTCERT-WP). The software
+  simulates the three-detector latent-class toy model of §10 of the paper,
+  illustrating the distinction between role-level identification,
+  statistical label symmetry, and access to stipulated role-exceeding
+  structure under interface closure.
 keywords:
-  - "representational sealing"
   - "interface closure"
+  - "representational sealing"
+  - "epistemic recoupling"
   - "identifiability"
   - "latent-class models"
+  - "observational equivalence"
   - "conceptual change"
-  - "epistemology"
   - "philosophy of science"
-
-license: MIT
-
 references:
-  - type: article
+  - type: report
     title: "What Conceptual Change Cannot Recover: Interface Closure, Epistemic Recoupling and Representational Sealing"
     authors:
       - family-names: "Kahl"
         given-names: "Peter"
         orcid: "https://orcid.org/0009-0003-1616-4843"
     year: 2026
+    institution:
+      name: "Lex et Ratio"
+    collection-title: "Lex et Ratio Working Papers"
+    number: "LXR-2026-PHI-RESTCERT-WP"
+    version: "1.0"
+    # Add the paper's DOI once reserved or issued:
+    # doi: "10.5281/zenodo.<TBA>"

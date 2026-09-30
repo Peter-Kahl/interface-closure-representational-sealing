@@ -5,7 +5,8 @@ three_detector.py
 =================
 
 Version:
-    1.0.1 (2026-09-28)
+    1.0.1 (2026-09-28); documentation revised 2026-09-30 (no change to
+    code behaviour or output)
 
 Supplementary research code for:
 
@@ -68,10 +69,13 @@ The script illustrates four claims made in §10:
        structure is generically identifiable up to permutation of the two
        latent-state labels.
 
-    3. Adding an intervention whose influence is mediated entirely through the
-       same role-level state enriches the observational regime but does not, by
-       itself, attach an independently specified realiser kind to either
-       latent state or break a permutation of role-exceeding realisers.
+    3. Intervention without recoupling: adding an intervention whose
+       influence is mediated entirely through the same role-level state
+       enriches the observational regime but does not, by itself, attach an
+       independently specified realiser kind to either latent state or break
+       a permutation of role-exceeding realisers. Intervening defeats a seal
+       only if it acts through a dependence sensitive to the sealed
+       distinction.
 
     4. Fixing P(X1=1 | G=a)=0.9 breaks the statistical label symmetry by
        stipulation. It fixes which latent position is called 'a'; it does not
@@ -79,23 +83,31 @@ The script illustrates four claims made in §10:
 
 Interface interpretation
 ------------------------
-The paper distinguishes the causal interface from the statistical factor it
-induces. In this toy model, every detector and intervention accessible to the
-simulated layer is mediated by the role-level latent state G:
+Notation. The code calls the latent role-level state G, following earlier
+drafts. In the published paper, G denotes the condition inquired into and the
+latent state is written S. Throughout this file, the code's G is the paper's S.
 
-    role-exceeding realiser / property Q
-                    |
-                    v
-             role-level state G
-              /      |      \
-             v       v       v
-            X1      X2      X3
+The paper distinguishes the causal interface from the architectural factor
+derived from it. In this toy model, every detector and intervention accessible
+to the simulated layer depends on the target only through the role-level
+state:
+
+             G ---> (X1, X2, X3)            [paper: S ---> (X1, X2, X3)]
 
 and, in the intervention case:
 
-             U ---> G ---> (X1, X2, X3)
+    U ---> G ---> (X1, X2, X3)
 
-There is no direct Q -> Xi measurement path.
+Which realiser kind fills which state is not a variable in this model. In the
+paper it is a structural parameter: an assignment alpha of kinds to states,
+where the kinds differ in a property Q. The sealing condition is
+
+    P(X1, X2, X3 | S; alpha) = P(X1, X2, X3 | S)   for every assignment alpha:
+
+given the state, the readings do not depend on which kind realises it. The
+code implements this condition by construction: neither alpha nor Q appears
+anywhere in the simulation or the likelihood. There is no Q-sensitive
+measurement path.
 
 The simulation therefore does NOT establish that any real system is
 interface-closed, that role-exceeding structure exists, or that such structure
@@ -656,7 +668,8 @@ def run_case_2_three_detectors(
 
 def run_case_3_intervention() -> None:
     """
-    Case 3: add a randomised intervention U whose effect is mediated by G.
+    Case 3: intervention without recoupling. Add a randomised intervention U
+    whose effect is mediated by G (the paper's S).
 
     U changes P(G=a) across intervention conditions, enriching the role-level
     observational structure. Because U reaches the detectors only through G,
