@@ -5,8 +5,7 @@ three_detector.py
 =================
 
 Version:
-    1.0.1 (2026-09-28); documentation revised 2026-09-30 (no change to
-    code behaviour or output)
+    1.0.2 (2026-09-30)
 
 Supplementary research code for:
 
@@ -55,7 +54,7 @@ Licence:
 Purpose
 -------
 This script supplies the numerical illustration discussed in §10.3 of the
-paper. It simulates a binary latent target state G in {a, b} observed through
+paper. It simulates a binary latent target state S in {a, b} observed through
 conditionally independent noisy binary detectors. It then fits latent-class
 models by expectation-maximisation (EM) from multiple random initialisations.
 
@@ -77,26 +76,25 @@ The script illustrates four claims made in §10:
        only if it acts through a dependence sensitive to the sealed
        distinction.
 
-    4. Fixing P(X1=1 | G=a)=0.9 breaks the statistical label symmetry by
+    4. Fixing P(X1=1 | S=a)=0.9 breaks the statistical label symmetry by
        stipulation. It fixes which latent position is called 'a'; it does not
        establish which role-exceeding realiser occupies that position.
 
 Interface interpretation
 ------------------------
-Notation. The code calls the latent role-level state G, following earlier
-drafts. In the published paper, G denotes the condition inquired into and the
-latent state is written S. Throughout this file, the code's G is the paper's S.
+Notation. The latent role-level state is written S, as in the paper, where S
+denotes the condition inquired into.
 
 The paper distinguishes the causal interface from the architectural factor
 derived from it. In this toy model, every detector and intervention accessible
 to the simulated layer depends on the target only through the role-level
 state:
 
-             G ---> (X1, X2, X3)            [paper: S ---> (X1, X2, X3)]
+             S ---> (X1, X2, X3)
 
 and, in the intervention case:
 
-    U ---> G ---> (X1, X2, X3)
+    U ---> S ---> (X1, X2, X3)
 
 Which realiser kind fills which state is not a variable in this model. In the
 paper it is a structural parameter: an assignment alpha of kinds to states,
@@ -154,7 +152,7 @@ In particular:
     * statistical label symmetry must not be conflated with permutation of
       role-exceeding realisers;
 
-    * intervention through G does not test whether some different intervention
+    * intervention through S does not test whether some different intervention
       or measurement could breach the stipulated interface; and
 
     * Case 1 uses a near-optimal log-likelihood tolerance of 1e-2, whereas the
@@ -213,7 +211,7 @@ import numpy as np
 # Script version, reproducibility, and simulation constants
 # ---------------------------------------------------------------------------
 
-SCRIPT_VERSION = "1.0.1"
+SCRIPT_VERSION = "1.0.2"
 
 RANDOM_SEED = 1
 N_TRIALS = 20_000
@@ -238,10 +236,10 @@ rng = np.random.default_rng(RANDOM_SEED)
 
 # Generating role-level parameters used in §10.3.
 TRUE_PI = 0.30
-TRUE_P = np.array([0.90, 0.80, 0.85], dtype=float)  # P(Xj=1 | G=a)
-TRUE_Q = np.array([0.20, 0.10, 0.30], dtype=float)  # P(Xj=1 | G=b)
+TRUE_P = np.array([0.90, 0.80, 0.85], dtype=float)  # P(Xj=1 | S=a)
+TRUE_Q = np.array([0.20, 0.10, 0.30], dtype=float)  # P(Xj=1 | S=b)
 
-# Intervention parameters: P(G=a | U=0), P(G=a | U=1).
+# Intervention parameters: P(S=a | U=0), P(S=a | U=1).
 TRUE_R = np.array([0.20, 0.80], dtype=float)
 
 
@@ -310,15 +308,15 @@ def simulate(
 
         prob_a = np.where(u == 1, r[1], r[0])
 
-    # True denotes the role-level state G=a.
-    g_is_a = rng.random(n) < prob_a
+    # True denotes the role-level state S=a.
+    s_is_a = rng.random(n) < prob_a
 
     x = np.empty((n, len(p)), dtype=int)
 
     for j in range(len(p)):
         draw_if_a = rng.random(n) < p[j]
         draw_if_b = rng.random(n) < q[j]
-        x[:, j] = np.where(g_is_a, draw_if_a, draw_if_b)
+        x[:, j] = np.where(s_is_a, draw_if_a, draw_if_b)
 
     return x
 
@@ -329,7 +327,7 @@ def loglik_and_posterior(
     p: np.ndarray,
     q: np.ndarray,
 ) -> tuple[float, np.ndarray]:
-    """Compute observed-data log-likelihood and posterior P(G=a | record)."""
+    """Compute observed-data log-likelihood and posterior P(S=a | record)."""
     likelihood_a = (
         np.prod(np.where(x == 1, p, 1.0 - p), axis=1) * prob_a
     )
@@ -549,9 +547,9 @@ def report_run_configuration() -> None:
     print(f"NumPy version = {np.__version__}")
     print(f"random seed = {RANDOM_SEED}")
     print(f"N = {N_TRIALS}")
-    print(f"P(G=a) = {TRUE_PI}")
-    print(f"P(Xj=1 | G=a) = {format_vector(TRUE_P, 2)}")
-    print(f"P(Xj=1 | G=b) = {format_vector(TRUE_Q, 2)}")
+    print(f"P(S=a) = {TRUE_PI}")
+    print(f"P(Xj=1 | S=a) = {format_vector(TRUE_P, 2)}")
+    print(f"P(Xj=1 | S=b) = {format_vector(TRUE_Q, 2)}")
     print(f"EM random starts per case = {N_STARTS}")
     print(
         "log-likelihood tolerances: "
@@ -669,10 +667,10 @@ def run_case_2_three_detectors(
 def run_case_3_intervention() -> None:
     """
     Case 3: intervention without recoupling. Add a randomised intervention U
-    whose effect is mediated by G (the paper's S).
+    whose effect is mediated by S.
 
-    U changes P(G=a) across intervention conditions, enriching the role-level
-    observational structure. Because U reaches the detectors only through G,
+    U changes P(S=a) across intervention conditions, enriching the role-level
+    observational structure. Because U reaches the detectors only through S,
     it introduces no direct Q-sensitive path. It therefore does not, by
     itself, identify a role-exceeding realiser or break a permutation of such
     realisers behind the stipulated interface.
@@ -701,13 +699,13 @@ def run_case_3_intervention() -> None:
     ]
 
     report_three_detector_fits(
-        "Case 3. three detectors + role-mediated intervention",
+        "Case 3. three detectors + intervention without recoupling",
         fits,
     )
 
     print(
         "The intervention changes the role-level prior but remains mediated "
-        "through G; it supplies no direct Q-sensitive observation and "
+        "through S; it supplies no direct Q-sensitive observation and "
         "therefore does not break realiser permutation behind the stipulated "
         "interface."
     )
@@ -717,7 +715,7 @@ def run_case_4_stipulation(
     x_three: np.ndarray,
 ) -> None:
     """
-    Case 4: stipulate P(X1=1 | G=a)=0.9.
+    Case 4: stipulate P(X1=1 | S=a)=0.9.
 
     This is a conventional/statistical anchor. It selects an orientation of
     the latent statistical model and thereby removes ordinary label switching
@@ -733,7 +731,7 @@ def run_case_4_stipulation(
     ]
 
     report_three_detector_fits(
-        "Case 4. conventional stipulation P(X1=1 | G=a)=0.9",
+        "Case 4. conventional stipulation P(X1=1 | S=a)=0.9",
         fits,
     )
 

@@ -18,14 +18,14 @@ It also contains the complete console output of the reference run reported in §
 
 ## Notation
 
-The code calls the latent role-level state `G`, following earlier drafts. In the published paper, `G` denotes the condition inquired into, and the latent state is written `S`. **Throughout this repository, the code's `G` is the paper's `S`.**
+The code follows the paper's notation: the latent role-level state is `S`, and `G` (in the paper) denotes the condition inquired into.
 
 ## The model
 
-A binary latent state `G ∈ {a, b}` (the paper's `S`) generates conditionally independent readings through three noisy binary detectors:
+A binary latent state `S ∈ {a, b}` generates conditionally independent readings through three noisy binary detectors:
 
 ```text
-G → (X1, X2, X3)          [paper: S → (X1, X2, X3)]
+S → (X1, X2, X3)
 ```
 
 The target's two states are realised by two kinds, which differ in a property `Q`. Which kind fills which state is **not** a variable in the model. In the paper it is a structural parameter: an assignment `α` of kinds to states. The sealing condition is
@@ -57,7 +57,7 @@ This case removes ordinary statistical non-identifiability, so that what remains
 A randomised intervention `U` changes the probability of the latent state:
 
 ```text
-U → G → (X1, X2, X3)
+U → S → (X1, X2, X3)
 ```
 
 The intervention enriches the available observations, but acts only through the same state. It introduces no path sensitive to `Q`, and the two label orientations remain.
@@ -71,7 +71,7 @@ An intervention confined to the same interface may improve identification of the
 Finally, the model is fitted with the stipulation
 
 ```text
-P(X1=1 | G=a) = 0.9
+P(X1=1 | S=a) = 0.9
 ```
 
 This removes the statistical label ambiguity by fixing which latent state is *called* `a`. It answers a naming question:
@@ -142,7 +142,7 @@ The script reports:
 
 ## Reference output
 
-`output/three_detector_output.txt` is the complete, unedited console output of the reference run reported in §10.3 of the paper, produced by `three_detector.py` version **1.0.1** with Python 3.14.7 and NumPy 2.5.3.
+`output/three_detector_output.txt` is the complete, unedited console output of the reference run reported in §10.3 of the paper, produced by `three_detector.py` version **1.0.2** with Python 3.12.3 and NumPy 2.4.4.
 
 It is provided for reproducibility and scrutiny. It is not an independent empirical dataset: the observations are simulated by the program itself.
 
@@ -153,7 +153,7 @@ python three_detector.py > my_run.txt
 diff -u output/three_detector_output.txt my_run.txt
 ```
 
-**Independent reproduction.** The reference run has been reproduced with Python 3.12.3 and NumPy 2.4.4. Every figure the paper reports was identical: the count of 36 near-optimal two-detector solutions, both three-detector solutions and their log-likelihoods, the intervention and stipulation cases, and the label-swap check. The only difference was among the four *example* two-detector fits printed under Case 1. These are drawn from a nearly flat likelihood, so which examples are printed first can vary between environments. The paper does not rely on them.
+**Reproduction across environments.** Version 1.0.1, which differs from 1.0.2 only in its labels (see `CHANGELOG.md`), was run with Python 3.14.7 and NumPy 2.5.3. Every figure the paper reports was identical to the reference run: the count of 36 near-optimal two-detector solutions, both three-detector solutions and their log-likelihoods, the intervention and stipulation cases, and the label-swap check. The only difference was among the four *example* two-detector fits printed under Case 1. These are drawn from a nearly flat likelihood, so which examples are printed first can vary between environments. The paper does not rely on them.
 
 In general, exact textual identity is not guaranteed across Python, NumPy or platform versions, and small floating-point differences do not by themselves indicate a failure to reproduce.
 
@@ -165,16 +165,16 @@ The generating parameters and random seed are set explicitly in `three_detector.
 random seed = 1
 N = 20,000
 
-P(G=a) = 0.30
-P(Xj=1 | G=a) = [0.90, 0.80, 0.85]
-P(Xj=1 | G=b) = [0.20, 0.10, 0.30]
+P(S=a) = 0.30
+P(Xj=1 | S=a) = [0.90, 0.80, 0.85]
+P(Xj=1 | S=b) = [0.20, 0.10, 0.30]
 ```
 
 For the intervention:
 
 ```text
-P(G=a | U=0) = 0.20
-P(G=a | U=1) = 0.80
+P(S=a | U=0) = 0.20
+P(S=a | U=1) = 0.80
 ```
 
 Each case is fitted from 40 random EM starts. Fits within 0.01 (two detectors) or 0.001 (three detectors) of the best log-likelihood are counted, and parameters are rounded to two decimal places to identify distinct solutions. The rounding is a reporting convention, not a mathematical criterion of distinctness.
@@ -211,7 +211,7 @@ interface-closure-representational-sealing/
 
 ## Version correspondence
 
-The numerical results in §10.3 of the paper correspond to `three_detector.py` **version 1.0.1**. Use the archived release of that version when reproducing or citing those results. Later versions may produce different output. See `CHANGELOG.md` for the history of changes.
+The numerical results in §10.3 of the paper correspond to `three_detector.py` **version 1.0.2**. Use the archived release of that version when reproducing or citing those results. Later versions may produce different output. See `CHANGELOG.md` for the history of changes.
 
 ## Citation
 
