@@ -10,7 +10,7 @@
 
 Computational supplement to:
 
-**Peter Kahl, ‘What Conceptual Change Cannot Recover: Interface Closure, Epistemic Recoupling and Representational Sealing’ (2026). Lex et Ratio Working Paper LXR-2026-PHI-RESTCERT-WP, Version 1.0. doi: 10.5281/zenodo.&lt;TBA&gt;.**
+**Peter Kahl, ‘What Conceptual Change Cannot Recover: Interface Closure, Epistemic Recoupling and Representational Sealing’ (2026). Lex et Ratio Working Paper LXR-2026-PHI-RESTCERT-WP, Version 1.0. doi: 10.5281/zenodo.23086004.**
 
 This repository contains the simulation accompanying the paper's toy model of **interface closure** and **representational sealing** (§10). The code illustrates the difference between identifying a latent role-level structure and gaining access to structure that the stipulated interface does not transmit.
 
@@ -217,7 +217,7 @@ The numerical results in §10.3 of the paper correspond to `three_detector.py` *
 
 If you use the theoretical argument, please cite the paper:
 
-> Kahl, P. (2026) *What Conceptual Change Cannot Recover: Interface Closure, Epistemic Recoupling and Representational Sealing*. Lex et Ratio Working Paper LXR-2026-PHI-RESTCERT-WP, Version 1.0. doi: 10.5281/zenodo.&lt;TBA&gt;.
+> Kahl, P. (2026) *What Conceptual Change Cannot Recover: Interface Closure, Epistemic Recoupling and Representational Sealing*. Lex et Ratio Working Paper LXR-2026-PHI-RESTCERT-WP, Version 1.0. doi: 10.5281/zenodo.23086004.
 
 If you use or modify the software, please also cite the archived software release. Citation metadata are in `CITATION.cff`. The paper and the software are separate scholarly objects with separate persistent identifiers.
 
@@ -234,6 +234,6 @@ The software is provided ‘as is’, without warranty of any kind, as specified
 ## Author
 
 **Peter Kahl**
-Independent researcher, Lex et Ratio
-ORCID: [0009-0003-1616-4843](https://orcid.org/0009-0003-1616-4843)
+Independent researcher, Lex et Ratio\
+ORCID: [0009-0003-1616-4843](https://orcid.org/0009-0003-1616-4843)\
 [www.lexetratio.com](https://www.lexetratio.com)
