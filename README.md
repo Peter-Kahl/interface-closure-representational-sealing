@@ -2,9 +2,8 @@
 
 <p align="left">
   <img
-    src="assets/representational-sealing.png"
+    src="assets/representational-sealing-2.jpg"
     alt="Representational sealing: heterogeneous role-exceeding structure is mediated through an interface into a restricted observable representation."
-    width="360"
   >
 </p>
 
