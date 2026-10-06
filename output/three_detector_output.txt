@@ -1,6 +1,6 @@
 === Run configuration ===
-script version = 1.0.2
-Python version = 3.14.7
+script version = 1.1.0
+Python version = 3.13.16
 NumPy version = 2.5.3
 random seed = 1
 N = 20000
@@ -14,10 +14,10 @@ solution-key rounding for reporting = 2 decimal places
 === Case 1. two detectors ===
 distinct near-optimal solutions (Δloglik <= 0.01; parameters rounded to 2 d.p.) found among 40 starts: 36
 (The underlying two-indicator model is non-identifiable; the finite set reported here is only a numerical illustration.)
-  prior=0.301  p=[0.950, 0.756]  q=[0.181, 0.120]
   prior=0.579  p=[0.147, 0.030]  q=[0.777, 0.698]
   prior=0.556  p=[0.133, 0.017]  q=[0.761, 0.680]
   prior=0.766  p=[0.249, 0.118]  q=[0.944, 0.941]
+  prior=0.539  p=[0.746, 0.574]  q=[0.022, 0.004]
 
 === Case 2. three detectors ===
 loglik=-35916.2295  prior=0.694  p=[0.201, 0.097, 0.295]  q=[0.892, 0.798, 0.850]
@@ -34,6 +34,46 @@ The intervention changes the role-level prior but remains mediated through S; it
 loglik=-35916.8190  prior=0.302  p=[0.900, 0.800, 0.852]  q=[0.202, 0.099, 0.297]
 distinct near-best solutions (Δloglik <= 0.001; parameters rounded to 2 d.p.) found among 40 starts: 1
 The stipulation fixes a statistical orientation only; it is not a target-side anchor and does not add a new measurement path.
+
+=== Case 5. a leak (epsilon = 0.01) ===
+leak channel X4: P(X4=1 | k1) = 0.505, P(X4=1 | k2) = 0.495 (fixed by mechanism, not fitted)
+pair compared: k1 fills the high-X1 state vs k2 fills it; role-level parameters as generated; one trial = one sensitive step
+leak random seed = 5; reliability 1 - delta = 0.95, so reliable discrimination needs D_N >= 0.9
+
+(a) discrimination profile
+per-trial total variation distance = 0.008274
+per-trial Bhattacharyya coefficient = 0.999961623
+        N   Hellinger lower   Monte Carlo D_N (s.e.)   Hellinger upper
+    1,000            0.0377         0.2192 (0.0017)            0.2718
+    5,000            0.1746         0.4629 (0.0025)            0.5646
+   10,000            0.3187         0.6206 (0.0026)            0.7320
+   20,000            0.5359         0.7840 (0.0023)            0.8858
+   50,000            0.8532         0.9493 (0.0013)            0.9892
+  100,000            0.9785         0.9947 (0.0004)            0.9998
+(Monte Carlo: 20,000 simulated N-trial records per row, each scored by the optimal likelihood-ratio test.)
+
+(b) trials needed for D_N >= 0.9
+per-trial TV bound (Corollary 5.2): at least 109 trials (far from tight: the leak is a two-sided shift, §5.7)
+Hellinger upper bound: at least 21,637 trials
+Hellinger lower bound: at most 59,998 trials
+At N = 20,000, D_N < 0.9: within that many trials the assignment is certification-infeasible at this reliability, though it is transmitted (X1-X3 generically identify the role structure, and X4's calibrated response then fixes the assignment).
+
+(c) reference dataset: N = 20,000 trials generated with k1 filling the high-X1 state
+k1 fills high-X1 state: loglik=-49700.0163  prior=0.308  p=[0.911, 0.784, 0.854]  q=[0.193, 0.101, 0.297]
+k2 fills high-X1 state: loglik=-49696.7631  prior=0.308  p=[0.910, 0.784, 0.854]  q=[0.193, 0.101, 0.296]
+fitted log-likelihood ratio (k1 vs k2) = -3.2531; with equal prior odds, P(k1 fills high-X1 state | data) = 0.037
+log-likelihood ratio with the role-level parameters known = -3.2431
+
+(d) fitted comparison over simulated datasets (200 per truth and per N)
+N =  20,000: error rate when k1 fills high-X1 state = 0.120; when k2 does = 0.100; worst case = 0.120
+N = 100,000: error rate when k1 fills high-X1 state = 0.000; when k2 does = 0.000; worst case = 0.000
+
+(e) absorption check
+If the leak channel's responses were free parameters, then 'k1 fills the high-X1 state, with P(X4=1) = 0.505 there and 0.495 in the other state' and 'k2 fills it, with the same response probabilities' would give the same distribution of records:
+loglik, k1 with calibrated responses = -49704.845632
+loglik, k2 with exchanged responses  = -49704.845632
+difference                          = 0
+A leak transmits the assignment only because the channel's response to each kind is fixed independently of the fit (Requirement 5.1). Absorbed by a free parameter, it leaves the pair transmission-equivalent and the assignment untransmitted.
 
 === Label-swap invariance check ===
 original loglik = -35917.390038
