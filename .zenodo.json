@@ -1,8 +1,8 @@
 {
   "title": "Interface Closure and Representational Sealing: Three-Detector Simulation",
   "upload_type": "software",
-  "version": "1.0.2",
-  "description": "Computational supplement to 'What Conceptual Change Cannot Recover: Interface Closure, Epistemic Recoupling and Representational Sealing' (Lex et Ratio Working Paper LXR-2026-PHI-RESTCERT-WP). The software simulates the three-detector latent-class toy model of §10 of the paper, illustrating the distinction between role-level identification, statistical label symmetry, and access to stipulated role-exceeding structure under interface closure. It includes the complete output of the reference run reported in §10.3.",
+  "version": "1.1.0",
+  "description": "Computational supplement to 'What Conceptual Change Cannot Recover: Interface Closure, Epistemic Recoupling and Representational Sealing' (Lex et Ratio Working Paper LXR-2026-PHI-RESTCERT-WP). The software simulates the three-detector latent-class toy model of §10 of the paper, illustrating the distinction between role-level identification, statistical label symmetry, and access to stipulated role-exceeding structure under interface closure. Version 1.1.0 adds a leak case, which computes the discrimination profile of a weakly transmitted distinction (§5.7) and separates it from an untransmitted one. It includes the complete output of the reference run reported in §10.3.",
   "creators": [
     {
       "name": "Kahl, Peter",
@@ -20,11 +20,13 @@
     "latent-class models",
     "observational equivalence",
     "conceptual change",
-    "philosophy of science"
+    "philosophy of science",
+    "discrimination profile",
+    "total variation distance"
   ],
   "related_identifiers": [
     {
-      "identifier": "10.5281/zenodo.23086004",
+      "identifier": "10.5281/zenodo.23086003",
       "relation": "isSupplementTo",
       "resource_type": "publication-workingpaper",
       "scheme": "doi"
