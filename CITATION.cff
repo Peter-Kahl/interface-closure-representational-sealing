@@ -7,8 +7,8 @@ authors:
     given-names: "Peter"
     affiliation: "Independent researcher, Lex et Ratio"
     orcid: "https://orcid.org/0009-0003-1616-4843"
-version: "1.0.2"
-date-released: "2026-09-30"
+version: "1.1.0"
+date-released: "2026-10-06"
 doi: "10.5281/zenodo.23086004"
 repository-code: "https://github.com/Peter-Kahl/interface-closure-representational-sealing"
 url: "https://www.lexetratio.com"
@@ -20,7 +20,10 @@ abstract: >-
   simulates the three-detector latent-class toy model of §10 of the paper,
   illustrating the distinction between role-level identification,
   statistical label symmetry, and access to stipulated role-exceeding
-  structure under interface closure.
+  structure under interface closure. From version 1.1.0 it also simulates
+  a weak leak and computes its discrimination profile (§5.7), separating a
+  distinction that is untransmitted from one that is transmitted but
+  certification-infeasible within a given amount of inquiry.
 keywords:
   - "interface closure"
   - "representational sealing"
@@ -30,6 +33,8 @@ keywords:
   - "observational equivalence"
   - "conceptual change"
   - "philosophy of science"
+  - "discrimination profile"
+  - "total variation distance"
 references:
   - type: report
     title: "What Conceptual Change Cannot Recover: Interface Closure, Epistemic Recoupling and Representational Sealing"

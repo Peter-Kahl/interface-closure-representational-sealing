@@ -5,14 +5,15 @@ three_detector.py
 =================
 
 Version:
-    1.0.2 (2026-09-30)
+    1.1.0 (2026-10-06)
 
 Supplementary research code for:
 
     Peter Kahl, "What Conceptual Change Cannot Recover:
     Interface Closure, Epistemic Recoupling and Representational
-    Sealing" (2026),
-    §10, "A toy model of sealing: three detectors".
+    Sealing" (2026), Version 2.0,
+    §10, "A toy model of sealing: three detectors", and §5.7,
+    "Approximate closure and discrimination profiles".
 
 Author:
     Peter Kahl
@@ -58,7 +59,7 @@ paper. It simulates a binary latent target state S in {a, b} observed through
 conditionally independent noisy binary detectors. It then fits latent-class
 models by expectation-maximisation (EM) from multiple random initialisations.
 
-The script illustrates four claims made in §10:
+The script illustrates five claims made in §10:
 
     1. With only two detectors, the role-level statistical structure is
        ordinarily non-identifiable: multiple distinct near-optimal parameter
@@ -79,6 +80,16 @@ The script illustrates four claims made in §10:
     4. Fixing P(X1=1 | S=a)=0.9 breaks the statistical label symmetry by
        stipulation. It fixes which latent position is called 'a'; it does not
        establish which role-exceeding realiser occupies that position.
+
+    5. A leak: if the sealing condition is relaxed by a weak channel whose
+       response to each realiser kind is fixed by its mechanism, the
+       assignment of kinds is transmitted, but only weakly. Its
+       discrimination profile (§5.7) can be computed, and at the sample size
+       of the other cases it lies below what reliable discrimination
+       requires: the assignment is transmitted but certification-infeasible
+       at that amount of inquiry. The case also shows that a leak whose
+       response to the kinds is a free parameter of the fitted model is
+       absorbed by that parameter, and transmits nothing.
 
 Interface interpretation
 ------------------------
@@ -102,10 +113,24 @@ where the kinds differ in a property Q. The sealing condition is
 
     P(X1, X2, X3 | S; alpha) = P(X1, X2, X3 | S)   for every assignment alpha:
 
-given the state, the readings do not depend on which kind realises it. The
-code implements this condition by construction: neither alpha nor Q appears
-anywhere in the simulation or the likelihood. There is no Q-sensitive
-measurement path.
+given the state, the readings do not depend on which kind realises it. In
+Cases 1-4 the code implements this condition by construction: neither alpha
+nor Q appears anywhere in the simulation or the likelihood. There is no
+Q-sensitive measurement path.
+
+Case 5 relaxes the condition. It adds a fourth reading X4, a leak channel,
+whose response depends weakly on the kind that realises the current state:
+
+    P(X4=1 | kind k1) = (1 + epsilon) / 2
+    P(X4=1 | kind k2) = (1 - epsilon) / 2
+
+These two probabilities are treated as fixed by the leak channel's mechanism,
+as Requirement 5.1 of the paper demands, not fitted. At epsilon = 0 the
+channel is a fair coin and the model is sealed again. Because the kind that
+fills the current state is fixed by the assignment alpha and the state S
+together, X4 depends on alpha:
+
+    S, alpha ---> X4        S ---> (X1, X2, X3)
 
 The simulation therefore does NOT establish that any real system is
 interface-closed, that role-exceeding structure exists, or that such structure
@@ -153,7 +178,17 @@ In particular:
       role-exceeding realisers;
 
     * intervention through S does not test whether some different intervention
-      or measurement could breach the stipulated interface; and
+      or measurement could breach the stipulated interface;
+
+    * Case 5's discrimination profile is computed at the grain of whole
+      trials: one trial, in which all four readings are taken, counts as one
+      step sensitive for the pair compared. The profile is bracketed exactly
+      by Hellinger-distance bounds and estimated by Monte Carlo simulation;
+      the Monte Carlo estimate carries the sampling error it reports;
+
+    * Case 5's leak is a stipulated toy mechanism. A small value of epsilon
+      is a small statistical distance, not a small physical flux (§5.7 of the
+      paper); and
 
     * Case 1 uses a near-optimal log-likelihood tolerance of 1e-2, whereas the
       three-detector cases use 1e-3. The looser tolerance is deliberate: the
@@ -182,11 +217,15 @@ reproducible with a compatible NumPy environment, subject to ordinary
 differences in numerical libraries, floating-point arithmetic, platform,
 software versions, and pseudo-random number generation behaviour.
 
-Because all cases share one pseudo-random generator, changing the order or
+Because Cases 1-4 share one pseudo-random generator, changing the order or
 number of random draws in an earlier case can change the generated data or EM
 initialisations in later cases even when RANDOM_SEED is unchanged. Exact
 reproduction therefore requires the same script version as well as the same
 seed and compatible software environment.
+
+Case 5 uses its own generator, seeded with LEAK_RANDOM_SEED, and runs after
+Case 4. Adding it leaves every figure of Cases 1-4 unchanged from version
+1.0.2, and its own figures do not depend on the earlier cases.
 
 No external data files are required.
 
@@ -211,7 +250,7 @@ import numpy as np
 # Script version, reproducibility, and simulation constants
 # ---------------------------------------------------------------------------
 
-SCRIPT_VERSION = "1.0.2"
+SCRIPT_VERSION = "1.1.0"
 
 RANDOM_SEED = 1
 N_TRIALS = 20_000
@@ -241,6 +280,34 @@ TRUE_Q = np.array([0.20, 0.10, 0.30], dtype=float)  # P(Xj=1 | S=b)
 
 # Intervention parameters: P(S=a | U=0), P(S=a | U=1).
 TRUE_R = np.array([0.20, 0.80], dtype=float)
+
+# Case 5 (a leak). The leak channel X4 reads 1 with probability
+# (1 + LEAK_EPSILON) / 2 when the current state is realised by kind k1, and
+# (1 - LEAK_EPSILON) / 2 when it is realised by kind k2. These probabilities
+# are fixed by the channel's mechanism and are not fitted.
+LEAK_EPSILON = 0.01
+
+# Case 5 uses its own generator, so that Cases 1-4 are unchanged from
+# version 1.0.2 and Case 5 does not depend on them.
+LEAK_RANDOM_SEED = 5
+
+# Reliability at which settling is assessed: worst-case success probability
+# 1 - delta. Reliable discrimination of a pair requires D_N >= 1 - 2 delta.
+LEAK_DELTA = 0.05
+
+# Numbers of trials N at which the discrimination profile is reported.
+LEAK_PROFILE_N = (1_000, 5_000, 10_000, 20_000, 50_000, 100_000)
+
+# Monte Carlo replications used to estimate each profile value.
+LEAK_MC_REPLICATIONS = 20_000
+
+# Simulated datasets per truth and per N for the fitted test's error rates.
+LEAK_TEST_REPLICATIONS = 200
+LEAK_TEST_N = (20_000, 100_000)
+
+# EM settings for the leak model (fitted on cell counts).
+LEAK_EM_STARTS = 8
+LEAK_EM_ITERATIONS = 500
 
 
 def validate_intervention(
@@ -740,6 +807,381 @@ def run_case_4_stipulation(
         "target-side anchor and does not add a new measurement path."
     )
 
+# ---------------------------------------------------------------------------
+# Case 5: a leak
+# ---------------------------------------------------------------------------
+
+# The 16 possible records (X1, X2, X3, X4) of one trial, in a fixed order.
+LEAK_CELLS = np.array(
+    [
+        [(c >> 3) & 1, (c >> 2) & 1, (c >> 1) & 1, c & 1]
+        for c in range(16)
+    ],
+    dtype=int,
+)
+
+
+def leak_channel_probabilities(
+    k1_fills_a: bool,
+    epsilon: float = LEAK_EPSILON,
+) -> tuple[float, float]:
+    """
+    Return P(X4=1 | S=a) and P(X4=1 | S=b) under an assignment of kinds.
+
+    The leak channel responds to the kind realising the current state, not to
+    the state as such. Which kind realises which state is fixed by the
+    assignment: if k1 fills a, k2 fills b, and conversely.
+    """
+    k1_response = (1.0 + epsilon) / 2.0
+    k2_response = (1.0 - epsilon) / 2.0
+
+    if k1_fills_a:
+        return k1_response, k2_response
+
+    return k2_response, k1_response
+
+
+def leak_cell_distribution(
+    pi: float,
+    p: np.ndarray,
+    q: np.ndarray,
+    k1_fills_a: bool,
+    *,
+    epsilon: float = LEAK_EPSILON,
+) -> np.ndarray:
+    """Probability of each of the 16 trial records under the leak model."""
+    c_a, c_b = leak_channel_probabilities(k1_fills_a, epsilon)
+
+    p_all = np.append(np.asarray(p, dtype=float), c_a)
+    q_all = np.append(np.asarray(q, dtype=float), c_b)
+
+    likelihood_a = (
+        np.prod(np.where(LEAK_CELLS == 1, p_all, 1.0 - p_all), axis=1) * pi
+    )
+    likelihood_b = (
+        np.prod(np.where(LEAK_CELLS == 1, q_all, 1.0 - q_all), axis=1)
+        * (1.0 - pi)
+    )
+
+    return likelihood_a + likelihood_b
+
+
+def fit_leak_em_on_counts(
+    counts: np.ndarray,
+    generator: np.random.Generator,
+    *,
+    epsilon: float = LEAK_EPSILON,
+    starts: int = LEAK_EM_STARTS,
+    iterations: int = LEAK_EM_ITERATIONS,
+) -> dict[bool, tuple[float, float, np.ndarray, np.ndarray]]:
+    """
+    Fit the leak model by EM on cell counts, under both assignments.
+
+    The role-level parameters (pi, p, q) are free; the leak channel's response
+    to each kind is fixed. EM is run with the leak channel's k1 response
+    attached to state a. A converged fit in which detector 1 reads 1 more
+    often in state a than in state b places k1 in the high-X1 state; a fit
+    with the opposite orientation is the same model with the state labels
+    exchanged, and places k2 there.
+
+    Returns, for each hypothesis h ('k1 fills the high-X1 state' is True),
+    the best fit (log-likelihood, pi, p, q) in the orientation in which state
+    a is the high-X1 state. Starts are run in vectorised batches until both
+    hypotheses have at least one fit.
+    """
+    counts = np.asarray(counts, dtype=float)
+    c_a, c_b = leak_channel_probabilities(True, epsilon)
+    x = LEAK_CELLS[:, :3]
+    x4 = LEAK_CELLS[:, 3]
+
+    leak_a = np.where(x4 == 1, c_a, 1.0 - c_a)
+    leak_b = np.where(x4 == 1, c_b, 1.0 - c_b)
+
+    best: dict[bool, tuple[float, float, np.ndarray, np.ndarray]] = {}
+
+    for _batch in range(10):
+        pi = generator.uniform(0.05, 0.95, starts)
+        p = generator.uniform(0.05, 0.95, (starts, 3))
+        q = generator.uniform(0.05, 0.95, (starts, 3))
+
+        for _ in range(iterations):
+            like_a = (
+                np.prod(
+                    np.where(x[None, :, :] == 1, p[:, None, :],
+                             1.0 - p[:, None, :]),
+                    axis=2,
+                )
+                * leak_a[None, :]
+                * pi[:, None]
+            )
+            like_b = (
+                np.prod(
+                    np.where(x[None, :, :] == 1, q[:, None, :],
+                             1.0 - q[:, None, :]),
+                    axis=2,
+                )
+                * leak_b[None, :]
+                * (1.0 - pi[:, None])
+            )
+            weight_a = like_a / (like_a + like_b)
+
+            mass_a = (counts[None, :] * weight_a).sum(axis=1)
+            mass_b = counts.sum() - mass_a
+
+            pi = mass_a / counts.sum()
+            p = (counts[None, :, None] * weight_a[:, :, None]
+                 * x[None, :, :]).sum(axis=1) / mass_a[:, None]
+            q = (counts[None, :, None] * (1.0 - weight_a)[:, :, None]
+                 * x[None, :, :]).sum(axis=1) / mass_b[:, None]
+
+        for i in range(starts):
+            # Compute each final likelihood in the orientation in which
+            # state a is the high-X1 state.
+            k1_in_high_state = bool(p[i, 0] > q[i, 0])
+
+            if k1_in_high_state:
+                fit_pi, fit_p, fit_q = float(pi[i]), p[i], q[i]
+            else:
+                fit_pi, fit_p, fit_q = 1.0 - float(pi[i]), q[i], p[i]
+
+            cell_prob = leak_cell_distribution(
+                fit_pi, fit_p, fit_q, k1_in_high_state, epsilon=epsilon
+            )
+            log_likelihood = float((counts * np.log(cell_prob)).sum())
+
+            current = best.get(k1_in_high_state)
+            if current is None or log_likelihood > current[0]:
+                best[k1_in_high_state] = (
+                    log_likelihood, fit_pi, fit_p.copy(), fit_q.copy()
+                )
+
+        if True in best and False in best:
+            return best
+
+    raise RuntimeError(
+        "EM did not produce fits for both assignments; increase starts."
+    )
+
+
+def smallest_n_reaching(
+    bhattacharyya: float,
+    target: float,
+    *,
+    upper_bound: bool,
+) -> int:
+    """
+    Smallest N at which a Hellinger bound on D_N reaches the target.
+
+    For N independent trials, the Bhattacharyya coefficient of the N-trial
+    distributions is BC**N, and
+
+        1 - BC**N  <=  D_N  <=  sqrt(1 - BC**(2N)).
+
+    With upper_bound=True, return the smallest N at which the upper bound
+    reaches the target: below it, D_N is certainly below the target. With
+    upper_bound=False, return the smallest N at which the lower bound
+    reaches it: from there on, D_N is certainly at least the target.
+    """
+    log_bc = np.log(bhattacharyya)
+
+    if upper_bound:
+        n = np.log(1.0 - target**2) / (2.0 * log_bc)
+    else:
+        n = np.log(1.0 - target) / log_bc
+
+    return int(np.ceil(n - 1e-9))
+
+
+def run_case_5_leak() -> None:
+    """
+    Case 5: a leak. Relax the sealing condition by a weak channel X4 whose
+    response to each realiser kind is fixed by its mechanism.
+
+    The pair compared is theta (k1 fills the high-X1 state) and theta'
+    (k2 fills it), with the generating role-level parameters. One trial is
+    one step, sensitive for the pair. The case reports:
+
+        (a) the per-trial distance and the discrimination profile D_N,
+            bracketed exactly by Hellinger bounds and estimated by Monte
+            Carlo simulation of the optimal (likelihood-ratio) test;
+
+        (b) the number of trials at which D_N can first reach 1 - 2 delta;
+
+        (c) the generalised likelihood-ratio comparison of the two
+            assignments on a reference dataset of N_TRIALS trials, with the
+            role-level parameters fitted;
+
+        (d) the worst-case error rate of the fitted comparison over
+            simulated datasets; and
+
+        (e) an absorption check: if the leak channel's response to the kinds
+            were a free parameter, the two assignments would fit equally well.
+    """
+    generator = np.random.default_rng(LEAK_RANDOM_SEED)
+    target = 1.0 - 2.0 * LEAK_DELTA
+
+    print(f"\n=== Case 5. a leak (epsilon = {LEAK_EPSILON:g}) ===")
+    print(
+        "leak channel X4: P(X4=1 | k1) = "
+        f"{(1.0 + LEAK_EPSILON) / 2.0:.3f}, P(X4=1 | k2) = "
+        f"{(1.0 - LEAK_EPSILON) / 2.0:.3f} (fixed by mechanism, not fitted)"
+    )
+    print(
+        "pair compared: k1 fills the high-X1 state vs k2 fills it; "
+        "role-level parameters as generated; one trial = one sensitive step"
+    )
+    print(
+        f"leak random seed = {LEAK_RANDOM_SEED}; reliability 1 - delta = "
+        f"{1.0 - LEAK_DELTA:g}, so reliable discrimination needs "
+        f"D_N >= {target:g}"
+    )
+
+    p_theta = leak_cell_distribution(TRUE_PI, TRUE_P, TRUE_Q, True)
+    p_theta_prime = leak_cell_distribution(TRUE_PI, TRUE_P, TRUE_Q, False)
+
+    per_trial_tv = 0.5 * float(np.abs(p_theta - p_theta_prime).sum())
+    bhattacharyya = float(np.sqrt(p_theta * p_theta_prime).sum())
+    log_ratio = np.log(p_theta / p_theta_prime)
+
+    # (a) Profile.
+    print("\n(a) discrimination profile")
+    print(f"per-trial total variation distance = {per_trial_tv:.6f}")
+    print(f"per-trial Bhattacharyya coefficient = {bhattacharyya:.9f}")
+    print(
+        "        N   Hellinger lower   Monte Carlo D_N (s.e.)   "
+        "Hellinger upper"
+    )
+
+    for n in LEAK_PROFILE_N:
+        lower = 1.0 - bhattacharyya**n
+        upper = float(np.sqrt(1.0 - bhattacharyya ** (2 * n)))
+
+        # D_N = E_theta[(1 - P_theta'/P_theta)_+] over N-trial records;
+        # the cell counts are sufficient.
+        counts = generator.multinomial(
+            n, p_theta, size=LEAK_MC_REPLICATIONS
+        )
+        log_lr = counts @ log_ratio
+        terms = np.clip(1.0 - np.exp(-log_lr), 0.0, None)
+        estimate = float(terms.mean())
+        standard_error = float(terms.std(ddof=1) / np.sqrt(len(terms)))
+
+        print(
+            f"{n:>9,}   {lower:15.4f}   {estimate:12.4f} ({standard_error:.4f})"
+            f"   {upper:15.4f}"
+        )
+
+    print(
+        f"(Monte Carlo: {LEAK_MC_REPLICATIONS:,} simulated N-trial records "
+        "per row, each scored by the optimal likelihood-ratio test.)"
+    )
+
+    # (b) Thresholds.
+    n_necessary = smallest_n_reaching(bhattacharyya, target, upper_bound=True)
+    n_sufficient = smallest_n_reaching(
+        bhattacharyya, target, upper_bound=False
+    )
+    n_linear = int(np.ceil(target / per_trial_tv))
+
+    print(f"\n(b) trials needed for D_N >= {target:g}")
+    print(
+        f"per-trial TV bound (Corollary 5.2): at least {n_linear:,} trials "
+        "(far from tight: the leak is a two-sided shift, §5.7)"
+    )
+    print(f"Hellinger upper bound: at least {n_necessary:,} trials")
+    print(f"Hellinger lower bound: at most {n_sufficient:,} trials")
+    print(
+        f"At N = {N_TRIALS:,}, D_N < {target:g}: within that many trials the "
+        "assignment is certification-infeasible at this reliability, though "
+        "it is transmitted (X1-X3 generically identify the role structure, "
+        "and X4's calibrated response then fixes the assignment)."
+    )
+
+    # (c) Reference dataset.
+    reference_counts = generator.multinomial(N_TRIALS, p_theta)
+    fits = fit_leak_em_on_counts(reference_counts, generator)
+    ll_k1, pi_k1, p_k1, q_k1 = fits[True]
+    ll_k2, pi_k2, p_k2, q_k2 = fits[False]
+    difference = ll_k1 - ll_k2
+    oracle = float(reference_counts @ log_ratio)
+
+    print(
+        f"\n(c) reference dataset: N = {N_TRIALS:,} trials generated with "
+        "k1 filling the high-X1 state"
+    )
+    print(
+        f"k1 fills high-X1 state: loglik={ll_k1:.4f}  prior={pi_k1:.3f}  "
+        f"p={format_vector(p_k1, 3)}  q={format_vector(q_k1, 3)}"
+    )
+    print(
+        f"k2 fills high-X1 state: loglik={ll_k2:.4f}  prior={pi_k2:.3f}  "
+        f"p={format_vector(p_k2, 3)}  q={format_vector(q_k2, 3)}"
+    )
+    print(
+        f"fitted log-likelihood ratio (k1 vs k2) = {difference:.4f}; "
+        f"with equal prior odds, P(k1 fills high-X1 state | data) = "
+        f"{1.0 / (1.0 + np.exp(-difference)):.3f}"
+    )
+    print(
+        "log-likelihood ratio with the role-level parameters known "
+        f"= {oracle:.4f}"
+    )
+
+    # (d) Error rates of the fitted comparison.
+    print(
+        "\n(d) fitted comparison over simulated datasets "
+        f"({LEAK_TEST_REPLICATIONS} per truth and per N)"
+    )
+
+    for n in LEAK_TEST_N:
+        error_rates = []
+
+        for truth_k1, cell_prob in ((True, p_theta), (False, p_theta_prime)):
+            errors = 0
+
+            for _ in range(LEAK_TEST_REPLICATIONS):
+                counts = generator.multinomial(n, cell_prob)
+                fitted = fit_leak_em_on_counts(counts, generator)
+                verdict_k1 = fitted[True][0] > fitted[False][0]
+                errors += int(verdict_k1 != truth_k1)
+
+            error_rates.append(errors / LEAK_TEST_REPLICATIONS)
+
+        print(
+            f"N = {n:>7,}: error rate when k1 fills high-X1 state = "
+            f"{error_rates[0]:.3f}; when k2 does = {error_rates[1]:.3f}; "
+            f"worst case = {max(error_rates):.3f}"
+        )
+
+    # (e) Absorption check.
+    c_a, c_b = leak_channel_probabilities(True)
+    absorbed = leak_cell_distribution(
+        TRUE_PI, TRUE_P, TRUE_Q, False, epsilon=-LEAK_EPSILON
+    )
+    ll_calibrated = float(reference_counts @ np.log(p_theta))
+    ll_absorbed = float(reference_counts @ np.log(absorbed))
+
+    print("\n(e) absorption check")
+    print(
+        "If the leak channel's responses were free parameters, then "
+        "'k1 fills the high-X1 state, with P(X4=1) = "
+        f"{c_a:.3f} there and {c_b:.3f} in the other state' and "
+        "'k2 fills it, with the same response probabilities' would give the "
+        "same distribution of records:"
+    )
+    print(
+        f"loglik, k1 with calibrated responses = {ll_calibrated:.6f}\n"
+        f"loglik, k2 with exchanged responses  = {ll_absorbed:.6f}\n"
+        f"difference                          = "
+        f"{abs(ll_calibrated - ll_absorbed):.12g}"
+    )
+    print(
+        "A leak transmits the assignment only because the channel's response "
+        "to each kind is fixed independently of the fit (Requirement 5.1). "
+        "Absorbed by a free parameter, it leaves the pair transmission-"
+        "equivalent and the assignment untransmitted."
+    )
+
 
 def report_label_swap_invariance(
     x_three: np.ndarray,
@@ -791,11 +1233,12 @@ def main() -> None:
 
     The passive three-detector dataset is generated once and reused for
     Cases 1, 2 and 4. Case 3 requires a separate dataset because it introduces
-    the intervention U.
+    the intervention U. Case 5 generates its own data, with its own seeded
+    generator, because it adds the leak channel X4.
 
-    All random draws use the same seeded NumPy generator. Consequently, the
-    exact Case 3 data and later EM initialisations depend on the sequence of
-    random draws made by earlier cases. Exact numerical reproduction therefore
+    All random draws in Cases 1-4 use the same seeded NumPy generator.
+    Consequently, the exact Case 3 data and later EM initialisations depend on
+    the sequence of random draws made by earlier cases. Exact numerical reproduction therefore
     requires the same script version as well as a compatible software
     environment.
     """
@@ -813,6 +1256,10 @@ def main() -> None:
     run_case_2_three_detectors(passive_x)
     run_case_3_intervention()
     run_case_4_stipulation(passive_x)
+
+    # Case 5 uses its own generator (LEAK_RANDOM_SEED), so Cases 1-4 are
+    # unchanged from version 1.0.2.
+    run_case_5_leak()
 
     # Keep statistical label symmetry distinct from realiser permutation.
     report_label_swap_invariance(passive_x)
